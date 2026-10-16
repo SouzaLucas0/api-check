@@ -1,0 +1,13 @@
+{
+  "name": "api-check",
+  "version": "1.0.0",
+  "description": "Monitora a saúde de APIs a cada 45 segundos",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
