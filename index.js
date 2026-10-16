@@ -1,9 +1,36 @@
+require('dotenv').config();
+
 const http = require('http');
 
-const TARGETS = [
-  { name: 'crystal-api', url: 'https://crystal-api-msqb.onrender.com/' },
-  { name: 'ceconnect-product-webhook', url: 'https://ceconnect-product-webhook.onrender.com/health' },
-];
+// Formato: TARGETS=nome1=https://url1,nome2=https://url2
+function parseTargets(raw) {
+  if (!raw || !raw.trim()) return [];
+
+  return raw
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const idx = entry.indexOf('=');
+      if (idx === -1) {
+        throw new Error(`Formato inválido em TARGETS: "${entry}". Use nome=url`);
+      }
+      const name = entry.slice(0, idx).trim();
+      const url = entry.slice(idx + 1).trim();
+      if (!name || !url) {
+        throw new Error(`Nome ou URL vazio em TARGETS: "${entry}"`);
+      }
+      new URL(url); // lança erro se a URL for inválida
+      return { name, url };
+    });
+}
+
+const TARGETS = parseTargets(process.env.TARGETS);
+
+if (TARGETS.length === 0) {
+  console.error('Nenhuma rota configurada. Defina TARGETS no .env ou nas variáveis do Render.');
+  process.exit(1);
+}
 
 const INTERVAL_MS = 45_000;
 const TIMEOUT_MS = 10_000;
@@ -83,7 +110,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Monitor rodando na porta ${PORT}`);
+  console.log(`Monitor rodando na porta ${PORT} com ${TARGETS.length} rota(s)`);
   runChecks();
   setInterval(runChecks, INTERVAL_MS);
 });
